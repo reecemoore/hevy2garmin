@@ -26,14 +26,20 @@ async function loadSetup(): Promise<SetupData> {
   } catch {
     return EMPTY;
   }
+  // Tokens are stored as platform 'garmin_tokens' (DBTokenStore); Hevy as 'hevy'.
+  // Older UI looked for 'garmin', so Setup never showed Connected after a successful login.
   const rows = await sql`
     SELECT platform, status, connected_at
     FROM platform_credentials
-    WHERE platform IN ('hevy', 'garmin')
+    WHERE platform IN ('hevy', 'garmin', 'garmin_tokens')
   `.catch(() => [] as Conn[]);
   const find = (p: string): Conn | null =>
     rows.find((r) => r.platform === p) ?? null;
-  return { dbConfigured: true, hevy: find("hevy"), garmin: find("garmin") };
+  return {
+    dbConfigured: true,
+    hevy: find("hevy"),
+    garmin: find("garmin_tokens") ?? find("garmin"),
+  };
 }
 
 function isConnected(c: Conn | null): boolean {
